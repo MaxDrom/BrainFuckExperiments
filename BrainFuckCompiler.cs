@@ -3,8 +3,7 @@ using System.Reflection;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using System.Reflection;
-using System.Text;
+
 
 namespace Brainfuck;
 
@@ -68,7 +67,7 @@ public static class DynamicCode
         var compilation = CSharpCompilation.Create(
             "DynamicAssembly",
             [tree],
-            refs,
+            [..refs,MetadataReference.CreateFromFile(typeof(Console).Assembly.Location)],
             new CSharpCompilationOptions(OutputKind
                 .DynamicallyLinkedLibrary));
 
