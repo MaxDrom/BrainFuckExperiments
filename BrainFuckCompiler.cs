@@ -61,7 +61,10 @@ public static class DynamicCode
                 !a.IsDynamic && !string.IsNullOrEmpty(a.Location))
             .Select(a =>
                 MetadataReference.CreateFromFile(a.Location));
-
+        var optimizationLevel = OptimizationLevel.Release;
+#if DEBUG
+        optimizationLevel = OptimizationLevel.Debug;
+#endif
         var compilation = CSharpCompilation.Create(
             "DynamicAssembly",
             [tree],
@@ -71,7 +74,9 @@ public static class DynamicCode
                     .Assembly.Location)
             ],
             new CSharpCompilationOptions(OutputKind
-                .DynamicallyLinkedLibrary, allowUnsafe:true));
+                .DynamicallyLinkedLibrary, allowUnsafe:true,
+
+                optimizationLevel: optimizationLevel));
 
         using var ms = new MemoryStream();
         var result = compilation.Emit(ms);
