@@ -9,22 +9,22 @@ namespace Brainfuck;
 
 public class BrainFuckCompiler
 {
-    private Dictionary<char, Func<string>> _commands = [];
+    private readonly Dictionary<char, Func<string>> _commands = [];
 
     public BrainFuckCompiler()
     {
         _commands['.'] =
-            () => "Console.Write((char)buffer[position]);";
+            () => "Console.Write((char)(*p));";
         _commands['>'] =
-            () => "position++;";
+            () => "p++;";
         _commands['<'] =
-            () => "position--;";
-        _commands['+'] = () => "buffer[position]++;";
-        _commands['-'] = () => "buffer[position]--;";
+            () => "p--;";
+        _commands['+'] = () => "(*p)++;";
+        _commands['-'] = () => "(*p)--;";
         _commands[','] =
-            () => "buffer[position] = (byte)Console.Read();";
+            () => "p[0] = (byte)Console.Read();";
 
-        _commands['['] = () => "while (buffer[position] != 0) {";
+        _commands['['] = () => "while ((*p) != 0) {";
         _commands[']'] = () => "}";
     }
 
@@ -33,9 +33,7 @@ public class BrainFuckCompiler
         var resultCode = new StringBuilder();
 
         resultCode.AppendLine(
-            "Span<byte> buffer = stackalloc byte[1024];");
-        resultCode.AppendLine("int position = 0;");
-
+            "var p = stackalloc byte[30000];");
 
         foreach (var c in code)
         {
@@ -50,7 +48,7 @@ using System;
 
 public static class DynamicCode
 {{
-    public static void Run()
+    public unsafe static void Run()
     {{
         {resultCode}
     }}
@@ -67,9 +65,13 @@ public static class DynamicCode
         var compilation = CSharpCompilation.Create(
             "DynamicAssembly",
             [tree],
-            [..refs,MetadataReference.CreateFromFile(typeof(Console).Assembly.Location)],
+            [
+                ..refs,
+                MetadataReference.CreateFromFile(typeof(Console)
+                    .Assembly.Location)
+            ],
             new CSharpCompilationOptions(OutputKind
-                .DynamicallyLinkedLibrary));
+                .DynamicallyLinkedLibrary, allowUnsafe:true));
 
         using var ms = new MemoryStream();
         var result = compilation.Emit(ms);
